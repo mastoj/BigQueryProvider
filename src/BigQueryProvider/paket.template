@@ -1,0 +1,25 @@
+type project
+title
+    BigQueryProvider
+owners
+    Tomas Jansson
+authors 
+    Tomas Jansson
+projectUrl
+    https://github.com/mastoj/BigQueryProvider/mastoj/BigQueryProvider
+iconUrl
+    https://raw.githubusercontent.com/mastoj/BigQueryProvider/master/docs/files/img/logo.png
+licenseUrl
+    https://github.com/mastoj/BigQueryProvider/mastoj/BigQueryProvider/blob/master/LICENSE.txt
+requireLicenseAcceptance
+    false
+copyright
+    Copyright 2015
+tags
+    bigquery,fsharp,gcloud
+summary
+    F# type provider for BigQuery
+description
+    F# type provider for BigQuery
+
+

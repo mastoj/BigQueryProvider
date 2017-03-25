@@ -59,9 +59,9 @@ The library is available under Public Domain license, which allows modification 
 redistribution for both commercial and non-commercial purposes. For more information see the 
 [License file][license] in the GitHub repository. 
 
-  [content]: https://github.com/fsprojects/BigQueryProvider/tree/master/docs/content
-  [gh]: https://github.com/fsprojects/BigQueryProvider
-  [issues]: https://github.com/fsprojects/BigQueryProvider/issues
-  [readme]: https://github.com/fsprojects/BigQueryProvider/blob/master/README.md
-  [license]: https://github.com/fsprojects/BigQueryProvider/blob/master/LICENSE.txt
+  [content]: https://github.com/mastoj/BigQueryProvider/tree/master/docs/content
+  [gh]: https://github.com/mastoj/BigQueryProvider
+  [issues]: https://github.com/mastoj/BigQueryProvider/issues
+  [readme]: https://github.com/mastoj/BigQueryProvider/blob/master/README.md
+  [license]: https://github.com/mastoj/BigQueryProvider/blob/master/LICENSE.txt
 *)

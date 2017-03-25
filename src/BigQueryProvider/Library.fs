@@ -1,4 +1,4 @@
-namespace BigQueryProvider
+module BigQueryProvider
 
 module ProcessHelper = 
   open System.Diagnostics
@@ -41,3 +41,60 @@ LIMIT 30
     let res = BigQueryAnalyze.analyzeQueryRaw query
     printfn "%A" res
     42
+
+open ProviderImplementation.ProvidedTypes
+open Microsoft.FSharp.Core.CompilerServices
+open Microsoft.FSharp.Quotations
+open System.Reflection
+
+[<TypeProvider>]
+[<CompilerMessageAttribute("This API supports the BigQueryProvider infrastructure and is not intended to be used directly from your code.", 101, IsHidden = true)>]
+type BigQueryCommandProvider (config: TypeProviderConfig) as this = 
+  inherit TypeProviderForNamespaces()
+  let ns = "BigQueryProvider.Provided" //this.GetType().Namespace
+  let assembly = Assembly.LoadFrom( config.RuntimeAssembly)
+  let providerType = ProvidedTypeDefinition(assembly, ns, "BigQueryCommandProvider", Some typeof<obj>, HideObjectMethods = true)
+
+  // let myProp = ProvidedProperty("MyProperty", typeof<string>, IsStatic = true,
+  //                                 GetterCode = fun _ -> <@@ "Hello world" @@>)
+  // do
+  //   providerType.AddMember(myProp)
+
+  do
+    providerType.DefineStaticParameters(
+            parameters = [ 
+                ProvidedStaticParameter("PropName", typeof<string>) 
+                ProvidedStaticParameter("CommandText", typeof<string>) 
+            ],             
+            instantiationFunction = (fun typeName [|propName; commandText|] ->
+                let rootType = ProvidedTypeDefinition(assembly, ns, typeName, Some typeof<obj>, HideObjectMethods = false)
+
+//                let value = lazy this.CreateRootType(typeName, unbox args.[0])
+//                let cmdProvidedType = ProvidedTypeDefinition(assembly, ns, typeName, None, HideObjectMethods = true)
+                // let ctor = ProvidedConstructor([], InvokeCode = fun args -> <@@ "My internal state" :> obj @@>)
+                // rootType.AddMember(ctor)
+
+                let res = BigQueryAnalyze.analyzeQueryRaw (commandText :?> string)
+
+                let getCommandText() = commandText :?> string
+
+                let prop = ProvidedProperty(propName :?> string, typeof<string>, GetterCode = fun _ -> let x = res.stdout in <@@ x @@>)
+                rootType.AddMember(prop)
+
+                let ctor2 = ProvidedConstructor(
+                    [ProvidedParameter("InnerState", typeof<string>)],
+                    InvokeCode = fun args -> <@@ (%%(args.[0]):string) :> obj @@>)
+
+                let ctor = ProvidedConstructor([], InvokeCode = fun _ -> <@@ "My internal state" :> obj @@>)
+                rootType.AddMember(ctor)
+                rootType.AddMember(ctor2)
+                rootType
+            ) 
+        )
+
+  do
+    this.AddNamespace(ns, [providerType])
+
+
+[<assembly:TypeProviderAssembly>]
+do ()

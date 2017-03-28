@@ -47,6 +47,11 @@ open Microsoft.FSharp.Core.CompilerServices
 open Microsoft.FSharp.Quotations
 open System.Reflection
 
+type SomeType = {
+  Wat: string
+}
+let createSome wat = {Wat = wat}
+
 [<TypeProvider>]
 [<CompilerMessageAttribute("This API supports the BigQueryProvider infrastructure and is not intended to be used directly from your code.", 101, IsHidden = true)>]
 type BigQueryCommandProvider (config: TypeProviderConfig) as this = 
@@ -78,12 +83,12 @@ type BigQueryCommandProvider (config: TypeProviderConfig) as this =
 
                 let getCommandText() = commandText :?> string
 
-                let prop = ProvidedProperty(propName :?> string, typeof<string>, GetterCode = fun _ -> let x = res.stdout in <@@ x @@>)
+                let prop = ProvidedProperty(propName :?> string, typeof<SomeType>, GetterCode = fun _ -> let x = res.stdout in <@@ createSome x :> obj @@>)
                 rootType.AddMember(prop)
 
                 let ctor2 = ProvidedConstructor(
                     [ProvidedParameter("InnerState", typeof<string>)],
-                    InvokeCode = fun args -> <@@ (%%(args.[0]):string) :> obj @@>)
+                    InvokeCode = fun args -> <@@ (createSome %%(args.[0])) :> obj @@>)
 
                 let ctor = ProvidedConstructor([], InvokeCode = fun _ -> <@@ "My internal state" :> obj @@>)
                 rootType.AddMember(ctor)

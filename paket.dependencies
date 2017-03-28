@@ -3,6 +3,7 @@ source https://nuget.org/api/v2
 github fsprojects/FSharp.TypeProviders.StarterPack src/ProvidedTypes.fs
 github fsprojects/FSharp.TypeProviders.StarterPack src/ProvidedTypes.fsi
 nuget FSharp.Core redirects: force
+nuget Newtonsoft.Json
 
 group Build
   source https://nuget.org/api/v2

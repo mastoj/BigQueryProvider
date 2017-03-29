@@ -68,10 +68,9 @@ type BigQueryCommandProvider (config: TypeProviderConfig) as this =
   do
     providerType.DefineStaticParameters(
             parameters = [ 
-                ProvidedStaticParameter("PropName", typeof<string>) 
                 ProvidedStaticParameter("CommandText", typeof<string>) 
             ],             
-            instantiationFunction = (fun typeName [|propName; commandText|] ->
+            instantiationFunction = (fun typeName [|commandText|] ->
                 let rootType = ProvidedTypeDefinition(assembly, ns, typeName, Some typeof<obj>, HideObjectMethods = false)
 
 //                let value = lazy this.CreateRootType(typeName, unbox args.[0])
@@ -83,12 +82,12 @@ type BigQueryCommandProvider (config: TypeProviderConfig) as this =
 
                 let getCommandText() = commandText :?> string
 
-                let prop = ProvidedProperty(propName :?> string, typeof<SomeType>, GetterCode = fun _ -> let x = res.stdout in <@@ createSome x :> obj @@>)
+                let prop = ProvidedProperty("execute", typeof<SomeType>, GetterCode = fun _ -> let x = res.stdout in <@@ createSome x :> obj @@>)
                 rootType.AddMember(prop)
 
                 let ctor2 = ProvidedConstructor(
                     [ProvidedParameter("InnerState", typeof<string>)],
-                    InvokeCode = fun args -> <@@ (createSome %%(args.[0])) :> obj @@>)
+                    InvokeCode = fun args -> let x = (BigQueryAnalyze.analyzeQueryRaw (commandText :?> string)).stdout in <@@ (createSome x) :> obj @@>)
 
                 let ctor = ProvidedConstructor([], InvokeCode = fun _ -> <@@ "My internal state" :> obj @@>)
                 rootType.AddMember(ctor)

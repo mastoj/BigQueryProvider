@@ -9,10 +9,10 @@ open System
 //let x = BigQueryCommandProvider<"Tomas">
 //let x = new BigQueryCommandProvider<CommandText = "asdsa">()
 
-type X = BigQueryCommandProvider<"tomas", "SELECT name FROM `uc-prox-development.tomas.dflow`">
+type X = BigQueryCommandProvider<"SELECT name FROM `uc-prox-development.tomas.dflow`">
 
 let x = X("as")
-printfn "%A" (x.tomas)
+printfn "%A" (x.execute)
 
 //type X = BigQueryProvider.
 

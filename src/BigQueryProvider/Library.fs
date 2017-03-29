@@ -82,7 +82,11 @@ type BigQueryCommandProvider (config: TypeProviderConfig) as this =
 
                 let getCommandText() = commandText :?> string
 
-                let prop = ProvidedProperty("execute", typeof<SomeType>, GetterCode = fun _ -> let x = res.stdout in <@@ createSome x :> obj @@>)
+                let prop = ProvidedMethod("execute", 
+                  [ProvidedParameter("s", typeof<bool>)],
+                  typeof<string>,
+                  InvokeCode = fun [this;s] -> <@@ (%%s:bool) |> not |> string @@>
+                  )
                 rootType.AddMember(prop)
 
                 let ctor2 = ProvidedConstructor(

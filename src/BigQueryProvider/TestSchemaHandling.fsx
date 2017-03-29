@@ -7,12 +7,18 @@ type ParameterType =
     | Int64
     | String
 
+type Paramter = {
+    Name: string
+    ParameterType: ParameterType
+}
+
 type FieldMode =
     | Nullable
     | NonNullable
     | Repeated
 
 type FieldName = string
+type FieldIndex = int
 
 type FieldType =
     | Boolean
@@ -21,13 +27,8 @@ type FieldType =
     | Record
 
 type Field =
-    | Value of FieldName * FieldType * FieldMode
-    | Record of FieldName * Field list * FieldMode
-
-type Paramter = {
-    Name: string
-    ParameterType: ParameterType
-}
+    | Value of FieldIndex * FieldName * FieldType * FieldMode
+    | Record of FieldIndex * FieldName * Field list * FieldMode
 
 open Newtonsoft.Json.Linq
 
@@ -61,25 +62,25 @@ let parseMode (jObj:JToken) =
     | "NULLABLE" -> Nullable
     | "REPEATED" -> Repeated
 
-let rec parseField (jObj:JToken) =
+let rec parseField index (jObj:JToken) =
     match jObj.Value<string>("type") with
-    | "RECORD" -> parseRecord jObj
-    | x -> parseValue jObj
-and parseRecord (jObj:JToken) = 
-    let fields = jObj.["fields"] |> Seq.toList |> List.map parseField
+    | "RECORD" -> parseRecord index jObj
+    | x -> parseValue index jObj
+and parseRecord index (jObj:JToken) = 
+    let fields = jObj.["fields"] |> Seq.toList |> List.mapi parseField
     let fieldName = parseName jObj
     let mode = parseMode jObj
-    Record(fieldName, fields, mode)
-and parseValue (jObj:JToken) =
+    Record(index, fieldName, fields, mode)
+and parseValue index (jObj:JToken) =
     let fieldName = parseName jObj
     let mode = parseMode jObj
     let fieldType = parseType jObj
-    Value(fieldName, fieldType, mode)
+    Value(index, fieldName, fieldType, mode)
     
 let parseSchema (jObj:JToken) = 
     jObj.["schema"].["fields"]
     |> Seq.toList
-    |> List.map parseField
+    |> List.mapi parseField
 
 let parseQueryMeta json = 
     let jObj = JObject.Parse(json).["statistics"].["query"]

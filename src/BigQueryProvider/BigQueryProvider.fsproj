@@ -38,6 +38,10 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\..\paket-files\fsprojects\FSharp.Data.SqlClient\src\SqlClient\DynamicRecord.fs">
+      <Paket>True</Paket>
+      <Link>paket-files/DynamicRecord.fs</Link>
+    </Compile>
     <Compile Include="..\..\paket-files\fsprojects\FSharp.TypeProviders.StarterPack\src\ProvidedTypes.fsi">
       <Paket>True</Paket>
       <Link>paket-files/ProvidedTypes.fsi</Link>

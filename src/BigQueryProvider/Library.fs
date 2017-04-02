@@ -101,12 +101,13 @@ module DesignTime =
         <@@
 //            let ps: (string * obj)[] = %%paramValues
 //            [|"yolo"|] |> %%mapping
-            let data = System.Collections.Generic.Dictionary()
+            // let data = System.Collections.Generic.Dictionary()
             let result = BigQueryAnalyze.analyzeQueryRaw commandText
-            let names: string[] = [|"Wat"|]
-            for i = 0 to names.Length - 1 do 
-                data.Add(names.[i], result |> box)
-            DynamicRecord(data) |> box 
+            (%%mapping) [|result.stdout :> obj|]
+            // let names: string[] = [|"Wat"|]
+            // for i = 0 to names.Length - 1 do 
+            //     data.Add(names.[i], result |> box)
+            // DynamicRecord(data) |> box 
             // let result = (%%execute) ()
             // ps |> %%mapOutParamValues
             // result

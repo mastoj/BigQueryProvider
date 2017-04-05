@@ -581,6 +581,7 @@ GITHUB
   remote: fsprojects/FSharp.TypeProviders.StarterPack
     src/ProvidedTypes.fs (45f4d8780b3213ef61ba4fccc716cd495565c1a4)
     src/ProvidedTypes.fsi (45f4d8780b3213ef61ba4fccc716cd495565c1a4)
+    src/ProvidedTypesContext.fs (45f4d8780b3213ef61ba4fccc716cd495565c1a4)
   remote: fsprojects/FSharp.Data.SqlClient
     src/SqlClient/DynamicRecord.fs (3be6a6d888983a4328cc6b2b15091c7d4f33555a)
 GROUP Build

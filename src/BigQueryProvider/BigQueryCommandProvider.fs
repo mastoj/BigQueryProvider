@@ -1,5 +1,6 @@
 namespace BigQueryProvider
 
+open ProviderImplementation
 open ProviderImplementation.ProvidedTypes
 open Microsoft.FSharp.Core.CompilerServices
 open Microsoft.FSharp.Quotations
@@ -13,7 +14,8 @@ open ProcessHelper
 type BigQueryCommandProvider (config: TypeProviderConfig) as this = 
   inherit TypeProviderForNamespaces()
   let nameSpace = this.GetType().Namespace
-  let assembly = Assembly.LoadFrom( config.RuntimeAssembly)
+  let assembly = Assembly.GetExecutingAssembly()
+
   do 
     printfn "Assembly name: %A" assembly.FullName 
   let providerType = ProvidedTypeDefinition(assembly, nameSpace, "BigQueryCommandProvider", Some typeof<obj>, HideObjectMethods = true)
@@ -42,8 +44,8 @@ type BigQueryCommandProvider (config: TypeProviderConfig) as this =
         |> (fun y -> y.stdout)
         |> SchemaHandling.Parsing.parseQueryMeta
 
-    let providedOutputType = DesignTime.createOutputType rootType schema
-
+    let providedOutputType = DesignTime.createOutputType providerType schema
+    
     DesignTime.createCommandCtors rootType
     |> List.append (DesignTime.createExecute rootType commandText providedOutputType)
     |> List.append ([providedOutputType])

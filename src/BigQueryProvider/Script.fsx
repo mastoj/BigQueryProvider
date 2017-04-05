@@ -1,8 +1,224 @@
-// Learn more about F# at http://fsharp.org. See the 'F# Tutorial' project
-// for more guidance on F# programming.
+#r "../../packages/Newtonsoft.Json/lib/net45/Newtonsoft.Json.dll"
+#r "../../packages/FSharp.Data/lib/net40/FSharp.Data.dll"
 
-#load "Library.fs"
-open BigQueryProvider
+open System
+open FSharp.Data
+open Newtonsoft.Json
+open System.IO
 
-let num = Library.hello 42
-printfn "%i" num
+let projectId = "uc-prox-production"
+
+module Auth = 
+  open Newtonsoft.Json
+  open System.IO
+  let parseJson<'a> str = Newtonsoft.Json.JsonConvert.DeserializeObject<'a>(str)
+
+  type AuthFile = 
+    {
+      [<JsonProperty("client_id")>]ClientId: string
+      [<JsonProperty("client_secret")>]ClientSecret: string
+      [<JsonProperty("refresh_token")>]RefreshToken: string
+      [<JsonProperty("type")>]Type: string
+    }
+
+  type AuthToken = 
+    {
+      [<JsonProperty("access_token")>]AccessToken: string
+      [<JsonProperty("token_type")>]TokenType: string
+      [<JsonProperty("expires_in")>]ExpiresIn: string
+      [<JsonProperty("id_token")>]IdToken: string    
+    }
+
+  let getWellknownFileContent() = 
+    let relativePath = ".config/gcloud/application_default_credentials.json"
+    let homePath = Environment.GetEnvironmentVariable("HOME")
+    let path = sprintf "%s/%s" homePath relativePath
+    File.ReadAllText(path)
+
+  let refreshToken authFile = 
+    let authUrl = "https://www.googleapis.com/oauth2/v4/token"
+    let requestBody = 
+      [
+        "grant_type", "refresh_token"
+        "client_id", authFile.ClientId
+        "client_secret", authFile.ClientSecret
+        "refresh_token", authFile.RefreshToken
+      ]
+    let response = Http.RequestString(authUrl, body = HttpRequestBody.FormValues requestBody)
+    response
+
+open Auth
+let authenticate() = 
+  getWellknownFileContent()
+  |> parseJson<AuthFile>
+  |> refreshToken
+  |> parseJson<AuthToken>
+  |> (fun i -> i.AccessToken)
+
+let projectName = "uc-prox-production"
+
+let authToken = authenticate()
+
+//POST 
+//Will return the jobConfigResult belw
+
+
+
+type Query = 
+    {
+      [<JsonProperty("query")>]Query: string
+      [<JsonProperty("useLegacySql")>]UseLegacySQL: bool
+    }
+
+type QueryConfig = {
+    [<JsonProperty("query")>]Query: Query
+    [<JsonProperty("dryRun")>]DryRun: bool    
+}
+
+type JobConfig = {
+    [<JsonProperty("configuration")>]Config: QueryConfig
+}
+
+[<Literal>]
+let jobConfigResult = """
+{
+    "status": {
+        "state": "DONE"
+    },
+    "kind": "bigquery#job",
+    "statistics": {
+        "query": {
+            "statementType": "SELECT",
+            "totalBytesBilled": "0",
+            "totalBytesProcessed": "0",
+            "cacheHit": false,
+            "undeclaredQueryParameters": [
+                {
+                    "parameterType": {
+                        "type": "BOOL"
+                    },
+                    "name": "a"
+                },
+                {
+                    "parameterType": {
+                        "type": "INT64"
+                    },
+                    "name": "b"
+                },
+                {
+                    "parameterType": {
+                        "type": "STRING"
+                    },
+                    "name": "c"
+                }
+            ],
+            "schema": {
+                "fields": [
+                    {
+                        "type": "BOOLEAN",
+                        "name": "x",
+                        "mode": "NULLABLE"
+                    },
+                    {
+                        "type": "INTEGER",
+                        "name": "y",
+                        "mode": "NULLABLE"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "name": "z",
+                        "mode": "NULLABLE"
+                    },
+                    {
+                        "type": "STRING",
+                        "name": "w",
+                        "mode": "REPEATED"
+                    },
+                    {
+                        "fields": [
+                            {
+                                "type": "STRING",
+                                "name": "t",
+                                "mode": "NULLABLE"
+                            },
+                            {
+                                "type": "INTEGER",
+                                "name": "u",
+                                "mode": "NULLABLE"
+                            }
+                        ],
+                        "type": "RECORD",
+                        "name": "v",
+                        "mode": "NULLABLE"
+                    },
+                    {
+                        "fields": [
+                            {
+                                "type": "INTEGER",
+                                "name": "_field_1",
+                                "mode": "NULLABLE"
+                            },
+                            {
+                                "type": "STRING",
+                                "name": "g",
+                                "mode": "NULLABLE"
+                            }
+                        ],
+                        "type": "RECORD",
+                        "name": "u",
+                        "mode": "REPEATED"
+                    },
+                    {
+                        "fields": [
+                            {
+                                "type": "STRING",
+                                "name": "h",
+                                "mode": "REPEATED"
+                            }
+                        ],
+                        "type": "RECORD",
+                        "name": "t",
+                        "mode": "NULLABLE"
+                    }
+                ]
+            }
+        },
+        "creationTime": "1490729738377",
+        "totalBytesProcessed": "0"
+    },
+    "jobReference": {
+        "projectId": "uc-prox-production"
+    },
+    "etag": "\"smpMas70-D1-zV2oEH0ud6qY21c/IWCngCv5ww2vMSLRv2GxsJsBwwU\"",
+    "configuration": {
+        "query": {
+            "createDisposition": "CREATE_IF_NEEDED",
+            "query": "SELECT @a IS TRUE AS x, @b + 1 AS y, \"foo\" = @c AS z, [\"tomas\", \"jansson\"] as w, STRUCT(\"wat\" as t, 69 as u) as v, [STRUCT(3, \"allo\" as g), STRUCT(5 as a, \"yolo\")] as u, STRUCT([\"a\"] as h) as t;",
+            "writeDisposition": "WRITE_TRUNCATE",
+            "destinationTable": {
+                "projectId": "uc-prox-production",
+                "tableId": "anon311d2e18c944c7a5c91ab469c91b33527a239a06",
+                "datasetId": "_2a855e87bf6147c55e896dcce917ee0deb1bc026"
+            },
+            "useLegacySql": false
+        },
+        "dryRun": true
+    },
+    "user_email": "tomas.jansson@unacast.com"
+}"""
+
+type JobConfigResult = JsonProvider<jobConfigResult>
+
+let getQueryInfo authToken project query = 
+    let url = sprintf "https://www.googleapis.com/bigquery/v2/projects/%s/jobs" project
+    let job = Newtonsoft.Json.JsonConvert.SerializeObject({Config = {Query = {UseLegacySQL = false; Query = query}; DryRun = true}})
+    let response = 
+        Http.RequestString(url, 
+            headers = 
+                [
+                    "Authorization", (sprintf "Bearer %s" authToken)
+                    "Content-Type", "application/json"
+                ],
+                body = HttpRequestBody.TextRequest job)
+    JobConfigResult.Parse(response)
+let q = getQueryInfo authToken projectName "SELECT @s as e"

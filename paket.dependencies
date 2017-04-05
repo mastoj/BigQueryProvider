@@ -6,6 +6,7 @@ github fsprojects/FSharp.TypeProviders.StarterPack src/ProvidedTypesContext.fs
 github fsprojects/FSharp.Data.SqlClient src/SqlClient/DynamicRecord.fs
 nuget FSharp.Core redirects: force
 nuget Newtonsoft.Json
+nuget FSharp.Data
 
 group Build
   source https://nuget.org/api/v2

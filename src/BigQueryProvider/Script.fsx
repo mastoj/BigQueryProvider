@@ -72,16 +72,6 @@ let tablesSample = """
     }]}"""
 
 type Tables = JsonProvider<tablesSample>
-let getTables authToken project dataset = 
-    let url = sprintf "https://www.googleapis.com/bigquery/v2/projects/%s/datasets/%s/tables" project dataset
-    let response = 
-        Http.RequestString(url, 
-            headers = 
-                [
-                    "Authorization", (sprintf "Bearer %s" authToken)
-                ])
-    let tables = Tables.Parse(response)
-    tables
 
 module Auth = 
   open Newtonsoft.Json
@@ -133,34 +123,21 @@ let authenticate() =
 let projectName = "uc-prox-production"
 
 let authToken = authenticate()
-printfn "authToken: %A" authToken
 
-let someTables = getTables authToken projectName "venue_visits_import"
-
-someTables.Tables
-|> Seq.iter (fun i -> printfn "%s" i.TableReference.TableId)
-
-//POST https://www.googleapis.com/bigquery/v2/projects/projectId/jobs
+//POST 
 //Will return the jobConfigResult belw
-[<Literal>]let jobConfig = """
-{
-    
-     "configuration": {
-        "query": {
-            "createDisposition": "CREATE_IF_NEEDED",
-            "query": "SELECT @a IS TRUE AS x, @b + 1 AS y, \"foo\" = @c AS z, [\"tomas\", \"jansson\"] as w, STRUCT(\"wat\" as t, 69 as u) as v, [STRUCT(3, \"allo\" as g), STRUCT(5 as a, \"yolo\")] as u, STRUCT([\"a\"] as h) as t;",
-            "writeDisposition": "WRITE_TRUNCATE",
-            "destinationTable": {
-                "projectId": "uc-prox-production",
-                "tableId": "anon311d2e18c944c7a5c91ab469c91b33527a239a06",
-                "datasetId": "_2a855e87bf6147c55e896dcce917ee0deb1bc026"
-            },
-            "useLegacySql": false
-        },
-        "dryRun": true
+type QueryConfig = 
+    {
+      [<JsonProperty("query")>]Query: QueryConfig
+      [<JsonProperty("useLegacySql")>]UseLegacySQL: bool
     }
+
+type JobConfig = {
+      [<JsonProperty("query")>]Query: QueryConfig
+      [<JsonProperty("dryRun")>]DryRun: bool    
 }
-"""
+
+
 
 [<Literal>]
 let jobConfigResult = """
@@ -289,3 +266,18 @@ let jobConfigResult = """
     },
     "user_email": "tomas.jansson@unacast.com"
 }"""
+
+type JobConfigResult = JsonProvider<jobConfigResult>
+
+let getQueryInfo authToken project query = 
+    let url = sprintf "https://www.googleapis.com/bigquery/v2/projects/%s/jobs" project
+    let response = 
+        Http.RequestString(url, 
+            headers = 
+                [
+                    "Authorization", (sprintf "Bearer %s" authToken)
+                ],
+                body = HttpRequestBody.Json //Insert the serialized job stuff here)
+    let tables = Tables.Parse(response)
+    tables
+let someTables = getTables authToken projectName "venue_visits_import"

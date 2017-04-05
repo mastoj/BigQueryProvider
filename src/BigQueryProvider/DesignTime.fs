@@ -61,19 +61,26 @@ let createExecute (commandText: string) providedOutputType : MemberInfo list =
     [
         let m = ProvidedMethod("execute", [], providedOutputType)
         m.InvokeCode <- fun exprArgs ->
+            let schema = // TODO: you can pass schema here, instead of commandText
+                (BigQueryHelper.analyzeQueryRaw commandText).stdout
+                |> parseQueryMeta
+            let (names, indexes) =
+                schema.Fields
+                |> List.choose (fun y ->
+                   match y with
+                   | Value(index, name, _, _) ->
+                        Some((string)name, (int)index)
+                   | _ -> None)
+                |> List.toArray
+                |> Array.unzip
             let mapping =
                 <@@
                     fun (row: obj[]) ->
-                        let schema =
-                            (BigQueryHelper.analyzeQueryRaw commandText).stdout
-                            |> parseQueryMeta
                         let data = System.Collections.Generic.Dictionary()
-                        schema.Fields
-                        |> List.iter (fun y ->
-                            match y with
-                            | Value(index, name, fieldType, mode) ->
-                                data.Add(name, row.[index])
-                            | _ -> ())
+                        Array.zip names indexes
+                        |> Array.iter (fun (name, index) ->
+                            data.Add(name, row.[index])
+                        )
                         DynamicRecord(data) |> box
                 @@>
             <@@

@@ -15,8 +15,8 @@ let createCommandCtors (cmdProvidedType: ProvidedTypeDefinition) =
         yield ctor :> MemberInfo
     ]
 
-let createOutputType (cmdProvidedType: ProvidedTypeDefinition) (schema: Schema) = 
-    let recordType = ProvidedTypeDefinition("Row", baseType = Some typeof<obj>, HideObjectMethods = true)
+let internal createOutputType (rootType:ProvidedTypeDefinition) (schema: Schema) = 
+    let recordType = ProvidedTypeDefinition(rootType.Assembly, rootType.Namespace, "Row", baseType = Some typeof<obj>, HideObjectMethods = true)
 
     let createProperty (field: Field) =
         match field with

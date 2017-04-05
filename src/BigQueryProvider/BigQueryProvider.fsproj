@@ -38,10 +38,6 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\..\paket-files\fsprojects\FSharp.Data.SqlClient\src\SqlClient\DynamicRecord.fs">
-      <Paket>True</Paket>
-      <Link>paket-files/DynamicRecord.fs</Link>
-    </Compile>
     <Compile Include="..\..\paket-files\fsprojects\FSharp.TypeProviders.StarterPack\src\ProvidedTypes.fsi">
       <Paket>True</Paket>
       <Link>paket-files/ProvidedTypes.fsi</Link>
@@ -50,8 +46,15 @@
       <Paket>True</Paket>
       <Link>paket-files/ProvidedTypes.fs</Link>
     </Compile>
+    <Compile Include="..\..\paket-files\fsprojects\FSharp.Data.SqlClient\src\SqlClient\DynamicRecord.fs">
+      <Paket>True</Paket>
+      <Link>paket-files/DynamicRecord.fs</Link>
+    </Compile>
+    <Compile Include="ProcessHelper.fs" />
+    <Compile Include="BigQueryHelper.fs" />
     <Compile Include="SchemaHandling.fs" />
-    <Compile Include="Library.fs" />
+    <Compile Include="DesignTime.fs" />
+    <Compile Include="BigQueryCommandProvider.fs" />
     <None Include="Script.fsx" />
     <None Include="paket.references" />
     <None Include="paket.template" />

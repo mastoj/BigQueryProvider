@@ -8,71 +8,6 @@ open System.IO
 
 let projectId = "uc-prox-production"
 
-[<Literal>]
-let dataSetSample = """
-{
-  "kind": "bigquery#datasetList",
-  "etag": "\"wWvNncJfeAdSHVaIWRpICxBS7AM/CMmBj3t9m1m047bVlGrpPo-H59k\"",
-  "datasets": [
-    {
-      "kind": "bigquery#dataset",
-      "id": "uc-prox-production:audience_analytics",
-      "datasetReference": {
-        "datasetId": "audience_analytics",
-        "projectId": "uc-prox-production"
-      }
-    },
-    {
-      "kind": "bigquery#dataset",
-      "id": "uc-prox-production:convertro",
-      "datasetReference": {
-        "datasetId": "convertro",
-        "projectId": "uc-prox-production"
-      }
-    }]}"""
-
-type Dataset = JsonProvider<dataSetSample>
-
-let getDatasets project = 
-    let url = sprintf "https://www.googleapis.com/bigquery/v2/projects/%s/datasets" project
-    let response = 
-        Http.RequestString(url, 
-            headers = 
-                [
-                    "Authorization", "Bearer ya29.Ci-uA5stRKgNigQ5OryhXTkF731TXAhZOZ_60kq5vQZq5mJp8RhNdufuT-QYBEA2JQ"
-                ])
-    Dataset.Parse(response)
-
-[<Literal>]
-let tablesSample = """
-{
-  "kind": "bigquery#tableList",
-  "etag": "\"wWvNncJfeAdSHVaIWRpICxBS7AM/uwhpiBsMw719A6_Z1-CZIo9-DAM\"",
-  "nextPageToken": "gimbal_visits_auto_2016_11_24_visits_00005",
-  "tables": [
-    {
-      "kind": "bigquery#table",
-      "id": "uc-prox-production:venue_visits_import.areametrics_beacon_proc",
-      "tableReference": {
-        "projectId": "uc-prox-production",
-        "datasetId": "venue_visits_import",
-        "tableId": "areametrics_beacon_proc"
-      },
-      "type": "TABLE"
-    },
-    {
-      "kind": "bigquery#table",
-      "id": "uc-prox-production:venue_visits_import.areametrics_beacon_raw",
-      "tableReference": {
-        "projectId": "uc-prox-production",
-        "datasetId": "venue_visits_import",
-        "tableId": "areametrics_beacon_raw"
-      },
-      "type": "TABLE"
-    }]}"""
-
-type Tables = JsonProvider<tablesSample>
-
 module Auth = 
   open Newtonsoft.Json
   open System.IO
@@ -126,18 +61,23 @@ let authToken = authenticate()
 
 //POST 
 //Will return the jobConfigResult belw
-type QueryConfig = 
+
+
+
+type Query = 
     {
-      [<JsonProperty("query")>]Query: QueryConfig
+      [<JsonProperty("query")>]Query: string
       [<JsonProperty("useLegacySql")>]UseLegacySQL: bool
     }
 
-type JobConfig = {
-      [<JsonProperty("query")>]Query: QueryConfig
-      [<JsonProperty("dryRun")>]DryRun: bool    
+type QueryConfig = {
+    [<JsonProperty("query")>]Query: Query
+    [<JsonProperty("dryRun")>]DryRun: bool    
 }
 
-
+type JobConfig = {
+    [<JsonProperty("configuration")>]Config: QueryConfig
+}
 
 [<Literal>]
 let jobConfigResult = """
@@ -271,13 +211,14 @@ type JobConfigResult = JsonProvider<jobConfigResult>
 
 let getQueryInfo authToken project query = 
     let url = sprintf "https://www.googleapis.com/bigquery/v2/projects/%s/jobs" project
+    let job = Newtonsoft.Json.JsonConvert.SerializeObject({Config = {Query = {UseLegacySQL = false; Query = query}; DryRun = true}})
     let response = 
         Http.RequestString(url, 
             headers = 
                 [
                     "Authorization", (sprintf "Bearer %s" authToken)
+                    "Content-Type", "application/json"
                 ],
-                body = HttpRequestBody.Json //Insert the serialized job stuff here)
-    let tables = Tables.Parse(response)
-    tables
-let someTables = getTables authToken projectName "venue_visits_import"
+                body = HttpRequestBody.TextRequest job)
+    JobConfigResult.Parse(response)
+let q = getQueryInfo authToken projectName "SELECT @s as e"

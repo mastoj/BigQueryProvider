@@ -10,18 +10,18 @@ open SchemaHandling
 open SchemaHandling.Parsing
 
 let createCommandCtors (cmdProvidedType: ProvidedTypeDefinition) =
-    [ 
+    [
         let ctor = ProvidedConstructor([], InvokeCode = fun _ -> <@@ "My internal state" :> obj @@>)
         yield ctor :> MemberInfo
     ]
 
-let internal createOutputType (rootType:ProvidedTypeDefinition) (schema: Schema) = 
-    let recordType = ProvidedTypeDefinition(rootType.Assembly, rootType.Namespace, "Row", baseType = Some typeof<obj>, HideObjectMethods = true)
+let internal createOutputType (rootType:ProvidedTypeDefinition) (schema: Schema) =
+    let recordType = ProvidedTypeDefinition("Row", baseType = Some typeof<obj>, HideObjectMethods = true)
 
     let createProperty (field: Field) =
         match field with
-        | Value(index, name, fieldType, mode) -> 
-        let propertyType = 
+        | Value(index, name, fieldType, mode) ->
+        let propertyType =
             match fieldType with
             | String -> typeof<string>
             | _ -> raise (exn "FieldType not supported yet")
@@ -30,7 +30,7 @@ let internal createOutputType (rootType:ProvidedTypeDefinition) (schema: Schema)
         property
         | _ -> raise (exn "Value type not supported yet")
 
-    let properties = 
+    let properties =
         schema.Fields
         |> List.map (createProperty >> (fun p -> p :> MemberInfo))
 
@@ -39,9 +39,9 @@ let internal createOutputType (rootType:ProvidedTypeDefinition) (schema: Schema)
     let property = ProvidedProperty(propertyName, propertyType)
     property.GetterCode <- fun args -> <@@ (unbox<DynamicRecord> %%args.[0]).[propertyName] @@>
 
-    let ctorParameter = ProvidedParameter(propertyName, propertyType)  
+    let ctorParameter = ProvidedParameter(propertyName, propertyType)
 
-    let ctor = 
+    let ctor =
         ProvidedConstructor([ctorParameter])
     ctor.InvokeCode <- fun args ->
             let pairs =  Seq.zip args properties //Because we need original names in dictionary
@@ -50,21 +50,21 @@ let internal createOutputType (rootType:ProvidedTypeDefinition) (schema: Schema)
             <@@
                 let pairs : (string * obj) [] = %%Expr.NewArray(typeof<string * obj>, pairs)
                 DynamicRecord (dict pairs)
-            @@> 
+            @@>
 
     (ctor:>MemberInfo)::properties
     |> recordType.AddMembers
 
     recordType
 
-let createExecute (cmdProvidedType: ProvidedTypeDefinition) (commandText: string) providedOutputType : MemberInfo list = 
+let createExecute (commandText: string) providedOutputType : MemberInfo list =
     [
         let m = ProvidedMethod("execute", [], providedOutputType)
         m.InvokeCode <- fun exprArgs ->
-            let mapping = 
-                <@@ 
-                    fun (row: obj[]) -> 
-                        let schema = 
+            let mapping =
+                <@@
+                    fun (row: obj[]) ->
+                        let schema =
                             (BigQueryHelper.analyzeQueryRaw commandText).stdout
                             |> parseQueryMeta
                         let data = System.Collections.Generic.Dictionary()
@@ -72,9 +72,9 @@ let createExecute (cmdProvidedType: ProvidedTypeDefinition) (commandText: string
                         |> List.iter (fun y ->
                             match y with
                             | Value(index, name, fieldType, mode) ->
-                                data.Add(name, row.[index]) 
+                                data.Add(name, row.[index])
                             | _ -> ())
-                        DynamicRecord(data) |> box 
+                        DynamicRecord(data) |> box
                 @@>
             <@@
                 let result = analyzeQueryRaw commandText

@@ -41,7 +41,7 @@ type BigQueryCommandProvider (config: TypeProviderConfig) as this =
     let schema =
         commandText
         |> BigQueryHelper.analyzeQueryRaw
-        |> (fun y -> y.stdout)
+        |> (fun y -> y)
         |> SchemaHandling.Parsing.parseQueryMeta
 
     let providedOutputType = DesignTime.createOutputType providerType schema

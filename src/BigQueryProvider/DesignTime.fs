@@ -60,10 +60,11 @@ let internal createOutputType (rootType:ProvidedTypeDefinition) (schema: Schema)
 
     recordType
 
-let execImpl commandText (row: obj[]) =
+let execImpl commandText =
     let schema =
-        (BigQueryHelper.analyzeQueryRaw commandText).stdout
+        (BigQueryHelper.analyzeQueryRaw commandText)
         |> parseQueryMeta
+    let row = [BigQueryHelper.executeQuery commandText :> obj]
     let data = System.Collections.Generic.Dictionary()
     schema.Fields
     |> List.iter (fun y ->
@@ -78,8 +79,7 @@ let createExecute (commandText: string) providedOutputType : MemberInfo list =
         let m = ProvidedMethod("execute", [], providedOutputType)
         m.InvokeCode <- fun exprArgs ->
             <@@
-                let result = analyzeQueryRaw commandText
-                execImpl commandText ([|result.stdout :> obj|])
+                execImpl commandText
             @@>
 
         yield m :> MemberInfo

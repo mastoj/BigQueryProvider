@@ -23,6 +23,7 @@ type FieldIndex = int
 
 type FieldType =
     | Boolean
+    | Float
     | String
     | Integer
     | Record

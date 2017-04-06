@@ -24,6 +24,9 @@ let internal createOutputType (rootType:ProvidedTypeDefinition) (schema: Schema)
         let propertyType =
             match fieldType with
             | String -> typeof<string>
+            | Integer -> typeof<int>
+            | Float -> typeof<double>
+            | Boolean -> typeof<bool>
             | _ -> raise (exn "FieldType not supported yet")
         let property = ProvidedProperty(name, propertyType)
         property.GetterCode <- fun args -> <@@ (unbox<DynamicRecord> %%args.[0]).[name] @@>
@@ -65,7 +68,7 @@ let execImpl commandText (row: obj[]) =
     schema.Fields
     |> List.iter (fun y ->
         match y with
-        | Value(index, name, _, _) ->
+        | Value(index, name, fieldType, mode) ->
             data.Add((string)name, row.[(int)index])
         | _ -> ())
     DynamicRecord(data)

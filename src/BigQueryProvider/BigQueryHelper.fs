@@ -39,9 +39,8 @@ module Auth =
             "client_secret", authFile.ClientSecret
             "refresh_token", authFile.RefreshToken
             ]
-        raise (exn (sprintf "%A" authFile))
-        // let response = Http.RequestString(authUrl, body = HttpRequestBody.FormValues requestBody)
-        // response
+        let response = Http.RequestString(authUrl, body = HttpRequestBody.FormValues requestBody)
+        response
 
     let authenticate() = 
         getWellknownFileContent()
@@ -87,15 +86,15 @@ let executeCmdBq = ProcessHelper.executeProcess "bq"
 let analyzeQueryRaw queryStr = 
     let projectName = "uc-prox-production"
     let authToken = Auth.authenticate()
-    "yolo"
-    // printfn "Here we are? %A" authToken
-    // let response = QueryAnalyze.getQueryInfo authToken projectName queryStr
-    // printfn "Are we here?"
-    // let getBodyText body = 
-    //     match body with
-    //     | FSharp.Data.HttpResponseBody.Text t -> t
-    //     | _ -> raise (exn "dunno")
-    // let bodyText = getBodyText response.Body
-    // match response.StatusCode with
-    // | 400 -> raise (exn (sprintf "|%s|" bodyText))
-    // | 200 -> bodyText
+    printfn "Here we are? %A" authToken
+    let response = QueryAnalyze.getQueryInfo authToken projectName queryStr
+    printfn "Are we here?"
+    let getBodyText body = 
+        match body with
+        | FSharp.Data.HttpResponseBody.Text t -> t
+        | _ -> raise (exn "dunno")
+    let bodyText = getBodyText response.Body
+    match response.StatusCode with
+    | 400 -> raise (exn (sprintf "|%s|" bodyText))
+    | 200 -> bodyText
+    

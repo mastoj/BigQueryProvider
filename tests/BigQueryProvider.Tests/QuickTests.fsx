@@ -35,23 +35,29 @@ let schema =
 //     let guidStr = (value?v).AsString()
 //     System.Guid.Parse(guidStr)
 
+open System.Collections.Generic
 let rec parseRecord (fields: Field list) (r:JsonValue) = 
+    let dict = new Dictionary<string, obj>()
     let values = [for value in r?f -> value]
     fields
-    |> List.map (parseField values)
+    |> List.iter (parseField dict values)
+    DynamicRecord(dict :> IDictionary<string, obj>)
 
-and parseField (values: JsonValue list) (field: Field) = 
+and parseField (dict: Dictionary<string, obj>) (values: JsonValue list) (field: Field) = 
     match field with
-    | Value (fieldIndex, fieldName, fieldType, fieldMode) -> parseValue values (fieldIndex, fieldName, fieldType, fieldMode)
-    | Record (fieldIndex, fieldName, fields, fieldMode) -> (fieldName, parseRecord fields (values.[fieldIndex]?v)) :> obj
+    | Value (fieldIndex, fieldName, fieldType, fieldMode) -> parseValue dict values (fieldIndex, fieldName, fieldType, fieldMode)
+    | Record (fieldIndex, fieldName, fields, fieldMode) -> 
+        
+        dict.[fieldName] <- (parseRecord fields (values.[fieldIndex]?v)) :> obj
 
-and parseValue values ((fieldIndex, fieldName, fieldType, fieldMode) as meta)= 
+and parseValue (dict: Dictionary<string, obj>) values ((fieldIndex, fieldName, fieldType, fieldMode) as meta)= 
     printfn "Field index: %A" meta
     match fieldType with
-    | String -> (fieldName, values.[fieldIndex]?v.AsString()) :> obj
-    | Float -> (fieldName, values.[fieldIndex]?v.AsFloat()) :> obj
-    | Integer -> (fieldName, values.[fieldIndex]?v.AsInteger()) :> obj
-    | Boolean -> (fieldName, values.[fieldIndex]?v.AsBoolean()) :> obj
+    | String -> (values.[fieldIndex]?v.AsString()) :> obj
+    | Float -> (values.[fieldIndex]?v.AsFloat()) :> obj
+    | Integer -> (values.[fieldIndex]?v.AsInteger()) :> obj
+    | Boolean -> (values.[fieldIndex]?v.AsBoolean()) :> obj
+    |> (fun v -> dict.[fieldName] <- v)
     //[for value in values -> parseValue value]
 
 let rows = res2?rows

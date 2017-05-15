@@ -26,7 +26,6 @@ type FieldType =
     | Float
     | String
     | Integer
-    | Record
 
 type Field =
     | Value of FieldIndex * FieldName * FieldType * FieldMode

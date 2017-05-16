@@ -16,7 +16,7 @@ open SchemaHandling
 // with args: SELECT @a IS TRUE AS x, @b + 1 AS y, "foo" = @c AS z, ["tomas", "jansson"] as w, STRUCT("wat" as t, 69 as u) as v, [STRUCT(3, "allo" as g), STRUCT(5 as a, "yolo")] as u, STRUCT(["a"] as h) as t
 
 [<Literal>]
-let query = """SELECT [STRUCT(1 AS a, 'abc' AS b),STRUCT(2 AS a, 'abcd' AS b)] as recarr, actor_attributes.blog, actor_attributes.gravatar_id, actor_attributes as attrs FROM `bigquery-public-data.samples.github_nested` LIMIT 5"""
+let query = """SELECT null as nullval, [STRUCT(1 AS a, 'abc' AS b),STRUCT(2 AS a, 'abcd' AS b)] as recarr, actor_attributes.blog, actor_attributes.gravatar_id, actor_attributes as attrs FROM `bigquery-public-data.samples.github_nested` LIMIT 5"""
 //type X = BigQueryCommandProvider<query>
 // let x = X()
 
@@ -45,34 +45,31 @@ let rec parseRecord (fields: Field list) (row:JsonValue) =
     let values = [for value in row?f -> value]
     fields
     |> List.iter (parseField dict values)
-    DynamicRecord(dict :> IDictionary<string, obj>)
+    DynamicRecord(dict :> IDictionary<string, obj>) :> obj
 
-and parseField (dict: Dictionary<string, obj>) (values: JsonValue list) (field: Field) = 
-    match field with
-    | Value (fieldIndex, fieldName, fieldType, fieldMode) -> 
-        match fieldMode with
-        | Nullable
-        | NonNullable ->
-            parseValue dict (values.[fieldIndex]?v) (fieldType)
-        | Repeated ->
-            [for arrV in values.[fieldIndex]?v -> arrV]
-            |> List.map (fun arrV -> parseValue dict (arrV?v) fieldType)
-            :> obj
-        | _ -> raise (exn "Not implemented yet")
-        |> (fun v -> dict.[fieldName] <- v) 
-    | Record (fieldIndex, fieldName, fields, fieldMode) -> 
-        match fieldMode with
-        | Nullable
-        | NonNullable ->
-            parseRecord fields (values.[fieldIndex]?v) :> obj
-        | Repeated ->
-            [for arrV in values.[fieldIndex]?v -> arrV]
-            |> List.map (fun arrv -> parseRecord fields (arrv?v) :> obj)
-            :> obj
-        |> (fun v -> dict.[fieldName] <- v)
+and parseField (dict: Dictionary<string, obj>) (values: JsonValue list) (field: Field) =
+    let fieldIndex, fieldName, fieldMode, parser = 
+        match field with
+        | Value (fieldIndex, fieldName, fieldType, fieldMode) -> 
+            fieldIndex, fieldName, fieldMode, (parseValue fieldType)
+        | Record (fieldIndex, fieldName, fields, fieldMode) -> 
+            fieldIndex, fieldName, fieldMode, (parseRecord fields)
 
+    let value = values.[fieldIndex]?v
+    match fieldMode with
+    | Nullable ->
+        if value = JsonValue.Null
+        then None
+        else value |> parser |> Some
+        :> obj
+    | NonNullable -> parser value
+    | Repeated -> 
+        [for arrV in value -> arrV?v]
+        |> List.map parser
+        :> obj
+    |> (fun v -> dict.[fieldName] <- v)
 
-and parseValue (dict: Dictionary<string, obj>) (value:JsonValue) fieldType = 
+and parseValue fieldType (value:JsonValue) = 
     match fieldType with
     | String -> value.AsString() :> obj
     | Float -> value.AsFloat() :> obj

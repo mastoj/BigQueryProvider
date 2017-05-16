@@ -70,6 +70,7 @@ module Parsing =
         match jObj.Value<string>("mode") with
         | "NULLABLE" -> Nullable
         | "REPEATED" -> Repeated
+        | _ -> NonNullable
 
     let rec private parseField index (jObj:JToken) =
         match jObj.Value<string>("type") with

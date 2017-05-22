@@ -1,0 +1,5 @@
+FSharp.Core
+FSharp.Data
+File:ProvidedTypes.fsi
+File:ProvidedTypes.fs
+File:DynamicRecord.fs

@@ -1,4 +1,7 @@
 module BigQueryProvider.BigQueryHelper 
+open FSharp.Data.SqlClient
+open FSharp.Data
+open FSharp.Data.JsonExtensions
 
 module Auth = 
     open Newtonsoft.Json
@@ -82,7 +85,11 @@ module QueryAnalyze =
                 body = HttpRequestBody.TextRequest job)
                 
 module QueryExecute = 
+    open System.Collections.Generic
     open FSharp.Data
+    open FSharp.Data.JsonExtensions
+    open SchemaHandling
+
     let template = """
     {
         "kind": "",
@@ -106,6 +113,44 @@ module QueryExecute =
         let json = FSharp.Data.JsonValue.Parse(res)
         json
 
+    let rec parseRecord (fields: Field list) (row:JsonValue) = 
+        let dict = new Dictionary<string, obj>()
+        let values = [for value in row?f -> value]
+        fields
+        |> List.iter (parseField dict values)
+        DynamicRecord(dict :> IDictionary<string, obj>) :> obj
+
+    and parseField (dict: Dictionary<string, obj>) (values: JsonValue list) (field: Field) =
+        let fieldIndex, fieldName, fieldMode, parser = 
+            match field with
+            | Value (fieldIndex, fieldName, fieldType, fieldMode) -> 
+                fieldIndex, fieldName, fieldMode, (parseValue fieldType)
+            | Record (fieldIndex, fieldName, fields, fieldMode) -> 
+                fieldIndex, fieldName, fieldMode, (parseRecord fields)
+
+        let value = values.[fieldIndex]?v
+        match fieldMode with
+        | Nullable ->
+            if value = JsonValue.Null
+            then None
+            else value |> parser |> Some
+            :> obj
+        | NonNullable -> parser value
+        | Repeated -> 
+            [for arrV in value -> arrV?v]
+            |> List.map parser
+            :> obj
+        |> (fun v -> dict.[fieldName] <- v)
+
+    and parseValue fieldType (value:JsonValue) = 
+        match fieldType with
+        | String -> value.AsString() :> obj
+        | Float -> value.AsFloat() :> obj
+        | Integer -> value.AsInteger() :> obj
+        | Boolean -> value.AsBoolean() :> obj
+        //[for value in values -> parseValue value]
+
+
 let executeCmdBq = ProcessHelper.executeProcess "bq"
 
 let analyzeQueryRaw queryStr = 
@@ -124,4 +169,10 @@ let analyzeQueryRaw queryStr =
 let executeQuery commandText = 
     let projectName = "uc-prox-production"
     let authToken = Auth.authenticate()
-    QueryExecute.executeQuery authToken projectName commandText
+    let res = QueryExecute.executeQuery authToken projectName commandText
+    let rows = res?rows
+    let schema =
+        commandText
+        |> analyzeQueryRaw
+        |> SchemaHandling.Parsing.parseQueryMeta
+    [for row in rows -> QueryExecute.parseRecord schema.Fields row]

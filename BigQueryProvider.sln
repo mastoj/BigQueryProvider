@@ -11,6 +11,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{A6A6AF7D-D
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "BigQueryProvider", "src\BigQueryProvider\BigQueryProvider.fsproj", "{04984E00-9B5E-4EA4-8D81-9E2035CB29FB}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "BigQueryProvider.DesignTime", "src\BigQueryProvider\BigQueryProvider.DesignTime.fsproj", "{0dee7467-e203-4671-8f86-ea64b3689ffa}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "BigQueryProvider.Runtime", "src\BigQueryProvider\BigQueryProvider.Runtime.fsproj", "{1b347b4b-376a-4284-b296-96b95ed7db02}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "project", "project", "{BF60BC93-E09B-4E5F-9D85-95A519479D54}"
 	ProjectSection(SolutionItems) = preProject
 		build.fsx = build.fsx

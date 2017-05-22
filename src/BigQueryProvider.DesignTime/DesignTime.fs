@@ -5,7 +5,7 @@ open Microsoft.FSharp.Core.CompilerServices
 open Microsoft.FSharp.Quotations
 open ProviderImplementation.ProvidedTypes
 open System.Reflection
-open BigQueryHelper
+open BigQueryProvider
 open SchemaHandling
 open SchemaHandling.Parsing
 
@@ -61,6 +61,7 @@ let internal createOutputType (rootType:ProvidedTypeDefinition) (schema: Schema)
     recordType
 
 let execImpl commandText =
+    BigQueryHelper.executeQuery commandText
     let schema =
         (BigQueryHelper.analyzeQueryRaw commandText)
         |> parseQueryMeta
